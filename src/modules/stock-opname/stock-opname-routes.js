@@ -9,15 +9,35 @@ const formatDate = (date) => {
 };
 
 const WebSocket = require("ws");
-const wss = new WebSocket.Server({ port: 5001 }); // Pastikan port sesuai dan tidak bentrok dengan aplikasi lain
+const wsPort = parseInt(process.env.STOCK_OPNAME_WS_PORT || "5001", 10);
+let wss = null;
+
+try {
+  wss = new WebSocket.Server({ port: wsPort });
+} catch (error) {
+  console.warn(
+    `Stock opname WebSocket disabled on port ${wsPort}: ${error.message}`,
+  );
+}
+
+if (wss) {
+  wss.on("error", (error) => {
+    console.warn(
+      `Stock opname WebSocket error on port ${wsPort}: ${error.message}`,
+    );
+    wss = null;
+  });
+}
 
 // Listener untuk koneksi WebSocket
-wss.on("connection", (ws) => {
-  console.log("WPS Tablet Connected");
-  ws.on("message", (message) => {
-    console.log(`Received message: ${message}`);
+if (wss) {
+  wss.on("connection", (ws) => {
+    console.log("WPS Tablet Connected");
+    ws.on("message", (message) => {
+      console.log(`Received message: ${message}`);
+    });
   });
-});
+}
 
 // Route untuk mendapatkan Nomor Stock Opname
 router.get("/no-stock-opname", verifyToken, async (req, res) => {
@@ -523,11 +543,13 @@ router.post("/no-stock-opname/:noso/scan", verifyToken, async (req, res) => {
       await request.query(insertQuery);
 
       // Mengirim notifikasi via WebSocket
-      wss.clients.forEach((client) => {
-        if (client.readyState === WebSocket.OPEN) {
-          client.send(`Data ${noso} berhasil diinsert.`);
-        }
-      });
+      if (wss) {
+        wss.clients.forEach((client) => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(`Data ${noso} berhasil diinsert.`);
+          }
+        });
+      }
 
       console.log(
         `[${new Date().toISOString()}] 📦 Stock opname - ${username} input label : "${resultscanned}"`,

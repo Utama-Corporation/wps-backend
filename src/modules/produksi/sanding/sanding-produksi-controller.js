@@ -1,0 +1,114 @@
+const service = require("./sanding-produksi-service");
+
+async function getMesinList(req, res, next) {
+  try {
+    const data = await service.getMesinList();
+    res.json(data);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function getHistory(req, res, next) {
+  try {
+    const data = await service.getHistory();
+    res.json(data);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function getNextNoProduksi(req, res, next) {
+  try {
+    const value = await service.getNextNoProduksi();
+    res.json({ NoProduksi: value });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function getNextNoLabel(req, res, next) {
+  try {
+    const value = await service.getNextNoLabel();
+    res.json({ NoSanding: value });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function getMasterOptions(req, res, next) {
+  try {
+    const data = await service.getMasterOptions();
+    res.json(data);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function saveHeader(req, res, next) {
+  try {
+    const noProduksi = await service.saveHeader(req.body);
+    res.json({ noProduksi, message: "Header tersimpan" });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function createLabel(req, res, next) {
+  try {
+    const noSanding = await service.createLabel(req.body);
+    res.json({ noSanding, message: "Label tersimpan" });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function addInput(req, res, next) {
+  try {
+    const result = await service.addInput(req.body);
+    res.json({ message: "Input ditambahkan", ...result });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function removeInput(req, res, next) {
+  try {
+    const result = await service.removeInput(req.body);
+    res.json({ message: "Input dihapus", ...result });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function addOutput(req, res, next) {
+  try {
+    const result = await service.addOutput(req.body);
+    res.json({ message: "Output ditambahkan", ...result });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function removeOutput(req, res, next) {
+  try {
+    const result = await service.removeOutput(req.body);
+    res.json({ message: "Output dihapus", ...result });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = {
+  getMesinList,
+  getHistory,
+  getNextNoProduksi,
+  getNextNoLabel,
+  getMasterOptions,
+  saveHeader,
+  createLabel,
+  addInput,
+  removeInput,
+  addOutput,
+  removeOutput,
+};

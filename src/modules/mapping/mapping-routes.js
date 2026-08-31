@@ -686,4 +686,195 @@ router.post("/label-list/save-changes", verifyToken, async (req, res) => {
   // ← HAPUS finally block
 });
 
+// GET /mapping/lokasi-summary
+// Menampilkan setiap blok lokasi beserta jumlah label yang masih berada di
+// lokasi tersebut (DateUsage IS NULL) dari 8 modul label.
+router.get("/mapping/lokasi-summary", verifyToken, async (req, res) => {
+  const { username } = req;
+  console.log(
+    `[${new Date().toISOString()}] Mapping Lokasi Summary - diakses oleh ${username}`,
+  );
+
+  const labelTables = [
+    { table: "ST_h", column: "NoST" },
+    { table: "S4S_h", column: "NoS4S" },
+    { table: "FJ_h", column: "NoFJ" },
+    { table: "Moulding_h", column: "NoMoulding" },
+    { table: "Laminating_h", column: "NoLaminating" },
+    { table: "CCAkhir_h", column: "NoCCAkhir" },
+    { table: "Sanding_h", column: "NoSanding" },
+    { table: "BarangJadi_h", column: "NoBJ" },
+  ];
+
+  // Satu baris = satu label yang masih "hidup" di sebuah IdLokasi.
+  const labelUnion = labelTables
+    .map(
+      (t) => `
+        SELECT h.IdLokasi
+        FROM ${t.table} h
+        WHERE h.DateUsage IS NULL
+          AND h.IdLokasi IS NOT NULL
+          AND EXISTS (
+            SELECT 1 FROM ${t.table.replace("_h", "_d")} d
+            WHERE d.${t.column} = h.${t.column}
+          )`,
+    )
+    .join(" UNION ALL ");
+
+  const query = `
+    SELECT l.IdLokasi, l.Blok, l.Description, ISNULL(c.JumlahLabel, 0) AS JumlahLabel
+    FROM MstLokasi l
+    LEFT JOIN (
+      SELECT IdLokasi, COUNT(*) AS JumlahLabel
+      FROM ( ${labelUnion} ) AS labels
+      GROUP BY IdLokasi
+    ) c ON c.IdLokasi = l.IdLokasi
+    WHERE l.Enable = 1
+    ORDER BY l.Blok ASC, l.IdLokasi ASC
+  `;
+
+  try {
+    const pool = await poolPromise;
+    const result = await pool.request().query(query);
+
+    return res.json({
+      success: true,
+      message: "Data ringkasan lokasi berhasil diambil",
+      data: result.recordset,
+      totalData: result.recordset.length,
+    });
+  } catch (error) {
+    console.error("Error fetching lokasi-summary:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: error.message,
+    });
+  }
+});
+
+// GET /mapping/lokasi-labels?idlokasi=<IdLokasi>
+// Daftar label pada satu lokasi, lengkap dengan nama jenis kayu (join
+// MstJenisKayu via IdJenisKayu) dan detail ukuran (tebal/lebar/panjang).
+router.get("/mapping/lokasi-labels", verifyToken, async (req, res) => {
+  const idlokasi = req.query.idlokasi;
+  const { username } = req;
+
+  if (!idlokasi) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Parameter idlokasi wajib diisi." });
+  }
+
+  console.log(
+    `[${new Date().toISOString()}] Mapping Lokasi Labels - ${username} membuka lokasi ${idlokasi}`,
+  );
+
+  const tables = [
+    { table: "ST_h", column: "NoST" },
+    { table: "S4S_h", column: "NoS4S" },
+    { table: "FJ_h", column: "NoFJ" },
+    { table: "Moulding_h", column: "NoMoulding" },
+    { table: "Laminating_h", column: "NoLaminating" },
+    { table: "CCAkhir_h", column: "NoCCAkhir" },
+    { table: "Sanding_h", column: "NoSanding" },
+    { table: "BarangJadi_h", column: "NoBJ" },
+  ];
+  const typeOf = {
+    ST_h: "ST",
+    S4S_h: "S4S",
+    FJ_h: "FJ",
+    Moulding_h: "MLD",
+    Laminating_h: "LMT",
+    CCAkhir_h: "CCA",
+    Sanding_h: "SND",
+    BarangJadi_h: "BJ",
+  };
+
+  const headerUnion = tables
+    .map(
+      (t) => `
+        SELECT h.${t.column} AS LabelNo, '${typeOf[t.table]}' AS LabelType,
+               h.IdJenisKayu, h.DateCreate
+        FROM ${t.table} h
+        WHERE h.DateUsage IS NULL AND h.IdLokasi = @idlokasi
+          AND EXISTS (SELECT 1 FROM ${t.table.replace("_h", "_d")} d WHERE d.${t.column} = h.${t.column})`,
+    )
+    .join(" UNION ALL ");
+
+  const detailUnion = tables
+    .map(
+      (t) => `
+        SELECT h.${t.column} AS LabelNo, d.NoUrut, d.Tebal, d.Lebar, d.Panjang, d.JmlhBatang
+        FROM ${t.table} h
+        JOIN ${t.table.replace("_h", "_d")} d ON d.${t.column} = h.${t.column}
+        WHERE h.DateUsage IS NULL AND h.IdLokasi = @idlokasi`,
+    )
+    .join(" UNION ALL ");
+
+  try {
+    const pool = await poolPromise;
+    const request = pool.request();
+    request.input("idlokasi", sql.VarChar, idlokasi);
+
+    const headerQuery = `
+      SELECT lbl.LabelNo, lbl.LabelType, lbl.DateCreate,
+             jk.Jenis, jk.Singkatan
+      FROM ( ${headerUnion} ) AS lbl
+      LEFT JOIN MstJenisKayu jk ON jk.IdJenisKayu = lbl.IdJenisKayu
+      ORDER BY lbl.DateCreate DESC
+    `;
+
+    const [headerResult, detailResult] = await Promise.all([
+      request.query(headerQuery),
+      request.query(detailUnion),
+    ]);
+
+    const detailMap = new Map();
+    detailResult.recordset.forEach((d) => {
+      if (!detailMap.has(d.LabelNo)) detailMap.set(d.LabelNo, []);
+      detailMap.get(d.LabelNo).push({
+        NoUrut: d.NoUrut,
+        Tebal: d.Tebal,
+        Lebar: d.Lebar,
+        Panjang: d.Panjang,
+        JmlhBatang: d.JmlhBatang,
+      });
+    });
+
+    let totalJumlah = 0;
+    const data = headerResult.recordset.map((h) => {
+      const details = (detailMap.get(h.LabelNo) || []).sort(
+        (a, b) => (a.NoUrut || 0) - (b.NoUrut || 0),
+      );
+      const jumlah = details.reduce((s, x) => s + (x.JmlhBatang || 0), 0);
+      totalJumlah += jumlah;
+      return {
+        LabelNo: h.LabelNo,
+        LabelType: h.LabelType,
+        Jenis: h.Jenis || null,
+        Singkatan: h.Singkatan || null,
+        DateCreate: formatDate(h.DateCreate),
+        Jumlah: jumlah,
+        Details: details,
+      };
+    });
+
+    return res.json({
+      success: true,
+      message: "Data label lokasi berhasil diambil",
+      data,
+      totalData: data.length,
+      summary: { totalJumlah },
+    });
+  } catch (error) {
+    console.error("Error fetching lokasi-labels:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: error.message,
+    });
+  }
+});
+
 module.exports = router;

@@ -38,6 +38,7 @@ const packingProduksiRoutes = require("./modules/produksi/packing/packing-produk
 const penKayuBulatRoutes = require("./modules/pen-kayu-bulat/pen-kayu-bulat-routes");
 const lembarTallyHasilSawmillRoutes = require("./modules/Lembar-tally-hasil-sawmill/lembar-tally-hasil-sawmill-routes");
 const vacuumV2Routes = require("./modules/vacuumv2/vacuumv2-routes");
+const labelS4sRoutes = require("./modules/label/s4s/label-s4s-routes");
 
 const app = express();
 
@@ -92,5 +93,6 @@ app.use("/api/produksi/packing", packingProduksiRoutes);
 app.use("/api/penerimaan/kayu-bulat", penKayuBulatRoutes);
 app.use("/api/lembar-tally-hasil-sawmill", lembarTallyHasilSawmillRoutes);
 app.use("/api/vacuumv2", vacuumV2Routes);
+app.use("/api", labelS4sRoutes);
 
 module.exports = app;

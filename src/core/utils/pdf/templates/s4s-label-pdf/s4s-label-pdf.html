@@ -1,0 +1,239 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        width: 80mm;
+        font-family: Arial, sans-serif;
+        font-size: 9pt;
+        background: white;
+      }
+
+      .label {
+        position: relative;
+        width: 80mm;
+        padding: 3mm 4mm;
+        border: 1.2px solid #000;
+      }
+
+      /* ── Header: LABEL S4S | NO : xxx ── */
+      .label-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        border-bottom: 1.5px solid #000;
+        padding-bottom: 1.2mm;
+        margin-bottom: 1.6mm;
+      }
+
+      .label-header .title,
+      .label-header .no-label {
+        font-size: 12pt;
+        font-weight: bold;
+        text-decoration: underline;
+      }
+
+      /* ── Info 2 kolom ── */
+      .info-grid {
+        display: flex;
+        gap: 3mm;
+        margin-bottom: 1mm;
+      }
+
+      .info-col {
+        flex: 1;
+      }
+
+      .info-row {
+        display: flex;
+        font-size: 8pt;
+        line-height: 1.5;
+        color: #111;
+      }
+
+      .info-row .k {
+        width: 12mm;
+        flex: none;
+      }
+
+      .info-row .sep {
+        width: 2mm;
+        flex: none;
+      }
+
+      .info-row .v {
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .mesin-row {
+        font-size: 8pt;
+        margin-bottom: 1.4mm;
+      }
+
+      /* ── Tabel detail ── */
+      table.detail {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 1.4mm;
+      }
+
+      table.detail th,
+      table.detail td {
+        border: 0.8px solid #000;
+        text-align: center;
+        font-size: 8pt;
+        padding: 1mm 0.5mm;
+      }
+
+      table.detail th {
+        font-weight: bold;
+      }
+
+      /* ── Blok bawah: QR kiri | ringkasan + MMYY kanan ── */
+      .bottom {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 3mm;
+      }
+
+      .qr-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex: none;
+      }
+
+      .qr-box img {
+        width: 22mm;
+        height: 22mm;
+        background: #fff;
+      }
+
+      .qr-box .qr-caption {
+        font-size: 8pt;
+        font-weight: bold;
+        text-align: center;
+      }
+
+      .summary {
+        flex: 1;
+        text-align: right;
+      }
+
+      .summary .row {
+        font-size: 9pt;
+      }
+
+      .summary .mmyy {
+        font-size: 30pt;
+        font-weight: bold;
+        line-height: 1.1;
+      }
+
+      .flags {
+        text-align: right;
+        font-size: 9pt;
+        font-weight: bold;
+      }
+
+      .remark {
+        text-align: center;
+        font-size: 8pt;
+        margin-top: 0.8mm;
+      }
+
+      /* ── Watermark COPY (jika sudah pernah dicetak) ──
+         Lurus (tanpa rotasi) dan diposisikan di area info/tabel saja
+         supaya tidak pernah menyentuh QR code di blok bawah. */
+      .watermark {
+        position: absolute;
+        top: 15mm;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 40pt;
+        font-weight: 900;
+        color: rgba(0, 0, 0, 0.16);
+        letter-spacing: 6px;
+        white-space: nowrap;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      /* Blok bawah selalu di atas watermark secara stacking */
+      .bottom,
+      .flags,
+      .remark {
+        position: relative;
+        z-index: 2;
+      }
+
+    </style>
+  </head>
+  <body>
+    <div class="label">
+      <div class="watermark">{{watermarkText}}</div>
+
+      <div class="label-header">
+        <span class="title">LABEL S4S</span>
+        <span class="no-label">NO : {{noS4S}}</span>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-col">
+          <div class="info-row"><span class="k">Jenis</span><span class="sep">:</span><span class="v">{{jenisKayu}}</span></div>
+          <div class="info-row"><span class="k">Grade</span><span class="sep">:</span><span class="v">{{grade}}</span></div>
+          <div class="info-row"><span class="k">Fisik</span><span class="sep">:</span><span class="v">{{fisik}}</span></div>
+        </div>
+        <div class="info-col">
+          <div class="info-row"><span class="k">Tgl</span><span class="sep">:</span><span class="v">{{tanggal}} ({{jam}})</span></div>
+          <div class="info-row"><span class="k">Telly</span><span class="sep">:</span><span class="v">{{telly}}</span></div>
+          <div class="info-row"><span class="k">Spk</span><span class="sep">:</span><span class="v">{{noSPK}}</span></div>
+        </div>
+      </div>
+
+      <div class="mesin-row">Mesin&nbsp;: {{mesinSusun}}</div>
+
+      <table class="detail">
+        <thead>
+          <tr>
+            <th>Tebal</th>
+            <th>Lebar</th>
+            <th>Panjang</th>
+            <th>Pcs</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{detailRows}}
+        </tbody>
+      </table>
+
+      <div class="bottom">
+        <div class="qr-box">
+          <img src="{{qrBase64}}" alt="QR" />
+          <div class="qr-caption">{{noS4S}}</div>
+        </div>
+        <div class="summary">
+          <div class="row">Jumlah : {{totalPcs}}</div>
+          <div class="row">m&sup3; : {{totalM3}}</div>
+          <div class="mmyy">{{mmYY}}</div>
+        </div>
+      </div>
+
+      {{rejectRow}}
+      {{lemburRow}}
+      {{remarkRow}}
+    </div>
+  </body>
+</html>

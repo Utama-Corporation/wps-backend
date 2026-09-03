@@ -40,6 +40,7 @@ const lembarTallyHasilSawmillRoutes = require("./modules/Lembar-tally-hasil-sawm
 const vacuumV2Routes = require("./modules/vacuumv2/vacuumv2-routes");
 const labelS4sRoutes = require("./modules/label/s4s/label-s4s-routes");
 const labelFjRoutes = require("./modules/label/fj/label-fj-routes");
+const labelMouldingRoutes = require("./modules/label/moulding/label-moulding-routes");
 
 const app = express();
 
@@ -96,5 +97,6 @@ app.use("/api/lembar-tally-hasil-sawmill", lembarTallyHasilSawmillRoutes);
 app.use("/api/vacuumv2", vacuumV2Routes);
 app.use("/api", labelS4sRoutes);
 app.use("/api", labelFjRoutes);
+app.use("/api", labelMouldingRoutes);
 
 module.exports = app;

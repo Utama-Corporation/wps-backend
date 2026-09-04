@@ -40,8 +40,6 @@ async function getHeader(noFJ) {
     ) o ON o.NoFJ = h.${KEY_COLUMN}
     LEFT JOIN (
       SELECT NoProduksi, IdMesin FROM FJProduksi_h
-      UNION
-      SELECT NoProduksi, IdMesin FROM CCAkhirProduksi_h
     ) p ON p.NoProduksi = o.NoProduksi
     LEFT JOIN BongkarSusunOutputFJ s ON s.NoFJ = h.${KEY_COLUMN}
     LEFT JOIN MstMesin m       ON m.IdMesin = p.IdMesin

@@ -39,9 +39,7 @@ async function getHeader(noLMT) {
       
     ) o ON o.NoLaminating = h.${KEY_COLUMN}
     LEFT JOIN (
-      SELECT NoProduksi, IdMesin FROM LaminatingProduksi_h
-      UNION
-      SELECT NoProduksi, IdMesin FROM CCAkhirProduksi_h
+      SELECT NoProduksi, IdMesin FROM FJProduksi_h      
     ) p ON p.NoProduksi = o.NoProduksi
     LEFT JOIN BongkarSusunOutputLaminating s ON s.NoLaminating = h.${KEY_COLUMN}
     LEFT JOIN MstMesin m       ON m.IdMesin = p.IdMesin

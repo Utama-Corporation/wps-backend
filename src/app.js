@@ -44,6 +44,7 @@ const labelMouldingRoutes = require("./modules/label/moulding/label-moulding-rou
 const labelLmtRoutes = require('./modules/label/lmt/label-lmt-routes');
 const labelCcaRoutes = require('./modules/label/cca/label-cca-routes');
 const labelSndRoutes = require('./modules/label/snd/label-snd-routes');
+const labelBjRoutes = require('./modules/label/bj/label-bj-routes');
 
 const app = express();
 
@@ -104,5 +105,6 @@ app.use("/api", labelMouldingRoutes);
 app.use("/api", labelLmtRoutes);
 app.use("/api", labelCcaRoutes);
 app.use("/api", labelSndRoutes);
+app.use("/api", labelBjRoutes);
 
 module.exports = app;

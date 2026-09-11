@@ -173,7 +173,7 @@ async function saveHeader({
 
 async function createLabel({
   kategori = "CCA",
-  idJenisKayu, idGrade, noSPKAsal, noSPK, tebal, lebar, panjang, jmlhBatang,
+  idJenisKayu, idGrade, noSPKAsal, noSPK, tebal, lebar, panjang, jmlhBatang, idLokasi,
 }) {
   const cat = normalizeKategori(kategori);
   const pool = await poolPromise;
@@ -187,6 +187,7 @@ async function createLabel({
   req.input("lb", sql.VarChar(20), lebar == null ? null : String(lebar));
   req.input("pj", sql.VarChar(20), panjang == null ? null : String(panjang));
   req.input("bt", sql.VarChar(20), jmlhBatang == null ? null : String(jmlhBatang));
+  req.input("lok", sql.Int, idLokasi || null);
 
   let result;
   if (cat === "S4S") {
@@ -195,7 +196,7 @@ async function createLabel({
       SELECT @ns = ISNULL('R.' + FORMAT(RIGHT(MAX(NoS4S), 6) + 1, '000000'), 'R.000001')
       FROM S4S_h;
       INSERT INTO S4S_h (NoS4S, IdJenisKayu, IdGrade, IdOrgTelly, DateCreate, DateUsage, NoSTAsal, IdUOMTblLebar, IdUOMPanjang, NoSPK, Jam, IsReject, IsLembur, IdWarehouse, IdFisik, NoSPKAsal, IdLokasi, HasBeenPrinted)
-      VALUES (@ns, @jk, @gr, 1, GETDATE(), NULL, NULL, 1, 1, NULLIF(@nospk, ''), FORMAT(GETDATE(), 'HH:mm'), 0, 0, 5, 5, NULLIF(@stasal, ''), NULL, 0);
+      VALUES (@ns, @jk, @gr, 1, GETDATE(), NULL, NULL, 1, 1, NULLIF(@nospk, ''), FORMAT(GETDATE(), 'HH:mm'), 0, 0, 5, 5, NULLIF(@stasal, ''), @lok, 0);
       INSERT INTO S4S_d (NoS4S, NoUrut, Tebal, Lebar, Panjang, JmlhBatang)
       VALUES (@ns, 1, @tb, @lb, @pj, @bt);
       SELECT @ns AS NoLabel;

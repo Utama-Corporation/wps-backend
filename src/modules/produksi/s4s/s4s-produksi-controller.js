@@ -84,6 +84,17 @@ exports.addInput = async (req, res) => {
   }
 };
 
+exports.getInputList = async (req, res) => {
+  try {
+    console.log(req.query);
+
+    const data = await service.getInputList(req.query || {});
+    return ok(res, "", data);
+  } catch (err) {
+    return fail(res, err);
+  }
+}
+
 exports.removeInput = async (req, res) => {
   try {
     const data = await service.removeInput(req.body || {});

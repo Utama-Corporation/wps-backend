@@ -86,9 +86,7 @@ exports.addInput = async (req, res) => {
 
 exports.getInputList = async (req, res) => {
   try {
-    console.log(req.query);
-
-    const data = await service.getInputList(req.query || {});
+    const data = await service.getInputList(req.params || {});
     return ok(res, "", data);
   } catch (err) {
     return fail(res, err);

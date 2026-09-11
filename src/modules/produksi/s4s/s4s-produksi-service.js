@@ -278,7 +278,7 @@ async function getInputList({tipe, noProduksi}) {
     LEFT OUTER JOIN ${mapping.master} h ON i.${mapping.col}=h.${mapping.col}
     LEFT OUTER JOIN ${mapping.detail} d ON i.${mapping.col}=d.${mapping.col} 
     LEFT OUTER JOIN MstJenisKayu j ON h.IdJenisKayu=j.IdJenisKayu
-    WHERE i.${mapping.col}=@np
+    WHERE i.NoProduksi=@np
   `);
 
   return result.recordset;
